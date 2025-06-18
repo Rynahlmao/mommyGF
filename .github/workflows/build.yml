@@ -2,7 +2,7 @@ name: Build and Release Windows EXE
 
 on:
   push:
-    tags: [ 'v*' ]  # Trigger on version tags like v1.0.0
+    tags: [ 'v*' ]  # Trigger on version tags (e.g. v1.0.0)
 
 jobs:
   build-and-release:
@@ -22,7 +22,11 @@ jobs:
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install flixel-ui
           haxelib install hxcpp
+          haxelib install tjson
+          haxelib install hscript
           haxelib run lime setup
           haxelib run openfl setup
 
