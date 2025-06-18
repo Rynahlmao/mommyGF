@@ -1,8 +1,8 @@
-name: Build & Release Must Murder Mommy
+name: Build, Release & Deploy Must Murder Mommy
 
 on:
   release:
-    types: [published]  # Triggers when a GitHub release is created
+    types: [published]  # Run when you publish a GitHub Release
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
           haxelib install hxcpp
           haxelib git hscript https://github.com/HaxeFoundation/hscript
 
-      - name: 🔧 Setup hxcpp toolchain
+      - name: 🔧 Set up HXCPP toolchain (force compile)
         run: haxelib run hxcpp
 
       - name: 🛠️ Build Windows Release
@@ -50,5 +50,53 @@ jobs:
           files: |
             mommyGF-windows.zip
             mommyGF-html5.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-gh-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.release.prerelease == false
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          persist-credentials: false
+
+      - name: Clean gh-pages branch
+        run: |
+          git rm -rf .
+          git clean -fdx
+
+      - name: Download HTML5 zip from release
+        uses: actions/github-script@v6
+        id: download
+        with:
+          script: |
+            const fs = require('fs');
+            const https = require('https');
+            const url = context.payload.release.assets.find(asset => asset.name === 'mommyGF-html5.zip').browser_download_url;
+            const file = fs.createWriteStream('mommyGF-html5.zip');
+            await new Promise((resolve, reject) => {
+              https.get(url, response => {
+                response.pipe(file);
+                file.on('finish', () => {
+                  file.close(resolve);
+                });
+              }).on('error', reject);
+            });
+
+      - name: Unzip HTML5 build
+        run: unzip mommyGF-html5.zip -d .
+
+      - name: Commit & push to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Deploy HTML5 build from release ${{ github.event.release.tag_name }}"
+          git push origin gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
