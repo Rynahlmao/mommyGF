@@ -1,11 +1,11 @@
-name: Build and Publish Windows EXE
+name: Build and Release Windows EXE
 
 on:
   push:
-    tags: [ 'v*' ]  # Runs when you push version tags like v1.0.0
+    tags: [ 'v*' ]  # Trigger only when pushing a version tag like v1.0.0
 
 jobs:
-  build:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
@@ -29,17 +29,22 @@ jobs:
       - name: Build Windows EXE
         run: lime test windows -release
 
-      - name: Upload Build Artifact (Optional)
-        uses: actions/upload-artifact@v3
+      - name: Compress Build Output
+        run: |
+          cd export/windows/bin
+          7z a ../../../mommyGF-windows.zip *
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: mommyGF-windows-build
-          path: export/windows/bin
+          name: mommyGF-windows
+          path: mommyGF-windows.zip
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: export/windows/bin/*.exe
+          files: mommyGF-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
