@@ -2,7 +2,7 @@ name: Build and Release Windows EXE
 
 on:
   push:
-    tags: [ 'v*' ]  # Trigger on version tags (e.g. v1.0.0)
+    tags: [ 'v*' ]  # Runs when you push version tags like v1.0.0
 
 jobs:
   build-and-release:
@@ -27,6 +27,7 @@ jobs:
           haxelib install hxcpp
           haxelib install tjson
           haxelib install hscript
+          haxelib install nape
           haxelib run lime setup
           haxelib run openfl setup
 
