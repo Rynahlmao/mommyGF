@@ -17,7 +17,7 @@ jobs:
         with:
           haxe-version: 4.2.5
 
-            - name: 📦 Install Required HaxeLibs
+      - name: 📦 Install Required HaxeLibs
         run: |
           haxelib setup C:\HaxeToolkit\haxelib
           haxelib install lime 2.9.1
@@ -39,12 +39,10 @@ jobs:
         run: haxelib run lime build Project.xml html5 -release
 
       - name: 📦 Package Windows Build
-        run: |
-          powershell Compress-Archive -Path export/release/windows/bin/* -DestinationPath mommyGF-windows.zip
+        run: powershell Compress-Archive -Path export/release/windows/bin/* -DestinationPath mommyGF-windows.zip
 
       - name: 📦 Package HTML5 Build
-        run: |
-          powershell Compress-Archive -Path export/release/html5/bin/* -DestinationPath mommyGF-html5.zip
+        run: powershell Compress-Archive -Path export/release/html5/bin/* -DestinationPath mommyGF-html5.zip
 
       - name: 🚀 Upload to GitHub Release
         uses: softprops/action-gh-release@v2
