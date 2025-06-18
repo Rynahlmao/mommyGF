@@ -2,7 +2,7 @@ name: Build and Release Windows EXE
 
 on:
   push:
-    tags: [ 'v*' ]  # Trigger only when pushing a version tag like v1.0.0
+    tags: [ 'v*' ]  # Trigger on version tags like v1.0.0
 
 jobs:
   build-and-release:
@@ -27,7 +27,7 @@ jobs:
           haxelib run openfl setup
 
       - name: Build Windows EXE
-        run: lime test windows -release
+        run: haxelib run lime test windows -release
 
       - name: Compress Build Output
         run: |
