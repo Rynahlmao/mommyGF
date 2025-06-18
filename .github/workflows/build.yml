@@ -1,102 +1,45 @@
-name: Build, Release & Deploy Must Murder Mommy
+name: Build and Publish Windows EXE
 
 on:
-  release:
-    types: [published]  # Run when you publish a GitHub Release
+  push:
+    tags: [ 'v*' ]  # Runs when you push version tags like v1.0.0
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up Haxe
+      - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 4.2.5
 
-      - name: 📦 Install Required HaxeLibs
+      - name: Install Haxe Libraries
         run: |
-          haxelib setup C:\HaxeToolkit\haxelib
-          haxelib install lime 2.9.1
-          haxelib install openfl 3.6.1
-          haxelib install flixel 4.4.1
-          haxelib install flixel-addons 2.6.0
-          haxelib install flixel-ui 2.3.0
-          haxelib install nape
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
           haxelib install hxcpp
-          haxelib git hscript https://github.com/HaxeFoundation/hscript
+          haxelib run lime setup
+          haxelib run openfl setup
 
-      - name: 🔧 Set up HXCPP toolchain (force compile)
-        run: haxelib run hxcpp
+      - name: Build Windows EXE
+        run: lime test windows -release
 
-      - name: 🛠️ Build Windows Release
-        run: haxelib run lime build Project.xml windows -release
-
-      - name: 🌐 Build HTML5 Release
-        run: haxelib run lime build Project.xml html5 -release
-
-      - name: 📦 Package Windows Build
-        run: powershell Compress-Archive -Path export/release/windows/bin/* -DestinationPath mommyGF-windows.zip
-
-      - name: 📦 Package HTML5 Build
-        run: powershell Compress-Archive -Path export/release/html5/bin/* -DestinationPath mommyGF-html5.zip
-
-      - name: 🚀 Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Build Artifact (Optional)
+        uses: actions/upload-artifact@v3
         with:
-          files: |
-            mommyGF-windows.zip
-            mommyGF-html5.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: mommyGF-windows-build
+          path: export/windows/bin
 
-  deploy-gh-pages:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event.release.prerelease == false
-
-    steps:
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          ref: gh-pages
-          persist-credentials: false
-
-      - name: Clean gh-pages branch
-        run: |
-          git rm -rf .
-          git clean -fdx
-
-      - name: Download HTML5 zip from release
-        uses: actions/github-script@v6
-        id: download
-        with:
-          script: |
-            const fs = require('fs');
-            const https = require('https');
-            const url = context.payload.release.assets.find(asset => asset.name === 'mommyGF-html5.zip').browser_download_url;
-            const file = fs.createWriteStream('mommyGF-html5.zip');
-            await new Promise((resolve, reject) => {
-              https.get(url, response => {
-                response.pipe(file);
-                file.on('finish', () => {
-                  file.close(resolve);
-                });
-              }).on('error', reject);
-            });
-
-      - name: Unzip HTML5 build
-        run: unzip mommyGF-html5.zip -d .
-
-      - name: Commit & push to gh-pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Deploy HTML5 build from release ${{ github.event.release.tag_name }}"
-          git push origin gh-pages
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: export/windows/bin/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
