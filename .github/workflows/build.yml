@@ -1,26 +1,23 @@
-# .github/workflows/build.yml
-name: Build HaxeFlixel Project (Windows + HTML5)
+name: Build & Release Must Murder Mommy
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  release:
+    types: [published]  # Triggers when a GitHub release is created
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
       - name: 🧰 Set up Haxe
         uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: 4.2.5 # Use the Haxe version you use locally
+          haxe-version: 4.2.5
 
-      - name: 📦 Install haxelibs
+      - name: 📦 Install Required HaxeLibs
         run: |
           haxelib setup C:\HaxeToolkit\haxelib
           haxelib install lime 2.9.1
@@ -28,23 +25,28 @@ jobs:
           haxelib install flixel 4.4.1
           haxelib install flixel-addons 2.6.0
           haxelib install flixel-ui 2.3.0
-          haxelib git hscript https://github.com/HaxeFoundation/hscript
           haxelib install nape
+          haxelib git hscript https://github.com/HaxeFoundation/hscript
 
-      - name: 🛠️ Build for Windows
+      - name: 🛠️ Build Windows Release
         run: haxelib run lime build Project.xml windows -release
 
-      - name: 🌐 Build for HTML5
+      - name: 🌐 Build HTML5 Release
         run: haxelib run lime build Project.xml html5 -release
 
-      - name: 📦 Upload Windows EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: Game-Windows
-          path: export/release/windows/bin
+      - name: 📦 Package Windows Build
+        run: |
+          powershell Compress-Archive -Path export/release/windows/bin/* -DestinationPath mommyGF-windows.zip
 
-      - name: 📦 Upload HTML5 Build
-        uses: actions/upload-artifact@v4
+      - name: 📦 Package HTML5 Build
+        run: |
+          powershell Compress-Archive -Path export/release/html5/bin/* -DestinationPath mommyGF-html5.zip
+
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Game-HTML5
-          path: export/release/html5/bin
+          files: |
+            mommyGF-windows.zip
+            mommyGF-html5.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
