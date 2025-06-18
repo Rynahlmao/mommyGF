@@ -1,0 +1,50 @@
+# .github/workflows/build.yml
+name: Build HaxeFlixel Project (Windows + HTML5)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🧰 Set up Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.2.5 # Use the Haxe version you use locally
+
+      - name: 📦 Install haxelibs
+        run: |
+          haxelib setup C:\HaxeToolkit\haxelib
+          haxelib install lime 2.9.1
+          haxelib install openfl 3.6.1
+          haxelib install flixel 4.4.1
+          haxelib install flixel-addons 2.6.0
+          haxelib install flixel-ui 2.3.0
+          haxelib git hscript https://github.com/HaxeFoundation/hscript
+          haxelib install nape
+
+      - name: 🛠️ Build for Windows
+        run: haxelib run lime build Project.xml windows -release
+
+      - name: 🌐 Build for HTML5
+        run: haxelib run lime build Project.xml html5 -release
+
+      - name: 📦 Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: Game-Windows
+          path: export/release/windows/bin
+
+      - name: 📦 Upload HTML5 Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Game-HTML5
+          path: export/release/html5/bin
