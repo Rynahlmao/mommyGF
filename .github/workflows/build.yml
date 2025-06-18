@@ -17,7 +17,7 @@ jobs:
         with:
           haxe-version: 4.2.5
 
-      - name: 📦 Install Required HaxeLibs
+            - name: 📦 Install Required HaxeLibs
         run: |
           haxelib setup C:\HaxeToolkit\haxelib
           haxelib install lime 2.9.1
@@ -26,7 +26,11 @@ jobs:
           haxelib install flixel-addons 2.6.0
           haxelib install flixel-ui 2.3.0
           haxelib install nape
+          haxelib install hxcpp
           haxelib git hscript https://github.com/HaxeFoundation/hscript
+
+      - name: 🔧 Setup hxcpp toolchain
+        run: haxelib run hxcpp
 
       - name: 🛠️ Build Windows Release
         run: haxelib run lime build Project.xml windows -release
